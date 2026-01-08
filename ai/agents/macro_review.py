@@ -1,5 +1,5 @@
-from ..models.reviews import MacroReview
-from ..ai_config import ai_config
+from ai.models.reviews import MacroReview
+from ai.ai_config import ai_config
 
 
 system_instructions= f"""

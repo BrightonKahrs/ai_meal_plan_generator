@@ -1,9 +1,8 @@
 import logging
 
-from ..models.meal_plan import MealPlan
-from ..ai_config import ai_config
+from ai.models.meal_plan import MealPlan
+from ai.ai_config import ai_config
 
-logger = logging.getLogger(__name__)
 
 system_instructions = f"""
 

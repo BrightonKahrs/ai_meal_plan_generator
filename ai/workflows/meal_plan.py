@@ -1,7 +1,7 @@
 from agent_framework.devui import serve
 
-from ..agents.meal_plan import meal_plan_agent
-from ..agents.macro_review import macro_review_agent
+from ai.agents.meal_plan import meal_plan_agent
+from ai.agents.macro_review import macro_review_agent
 
 
 if __name__ == "__main__":
