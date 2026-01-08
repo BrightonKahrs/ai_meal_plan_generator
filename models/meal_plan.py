@@ -34,7 +34,6 @@ class Recipe(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     # Header Info
-    recipe_id: str = Field(..., description="AI generates recipe:draft, system overrides with recipe:uuid")
     title: str
     dietary_preferences: List[str]
     description: str
@@ -66,6 +65,6 @@ class MealPlan(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     # Should be created by system, not AI
-    id: str = Field(..., description="AI generates meal_plan:draft, system overrides with meal_plan:uuid")
     title: str
+    notes: str
     plan: List[MealSlot]

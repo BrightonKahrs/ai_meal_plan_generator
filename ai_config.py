@@ -5,7 +5,7 @@ from agent_framework.azure import AzureAIAgentClient
 
 load_dotenv()
 
-class Config:
+class AIConfig:
 
     def __init__(self):
         # Azure AI Configuration
@@ -21,4 +21,4 @@ class Config:
             )
 
 
-config = Config()
+ai_config = AIConfig()
