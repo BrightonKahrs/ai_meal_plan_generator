@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from agent_framework.azure import AzureAIAgentClient
+from azure.identity.aio import DefaultAzureCredential
 
 load_dotenv()
 
@@ -9,16 +10,17 @@ class AIConfig:
 
     def __init__(self):
         # Azure AI Configuration
-        self.azure_ai_project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
-        self.azure_ai_model_deployment_name = os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME")
-        self.azure_ai_api_key = os.getenv("AZURE_AI_API_KEY")
+        self._azure_ai_project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
+        self._azure_ai_model_deployment_name = os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME")
 
         # Initialize client to be used across AI Agents
+        self._credential = DefaultAzureCredential()
+
         self.client = AzureAIAgentClient(
-                api_key=self.azure_ai_api_key,
-                project_endpoint=self.azure_ai_project_endpoint,
-                model_deployment_name=self.azure_ai_model_deployment_name
-            )
+            credential=self._credential,
+            project_endpoint=self._azure_ai_project_endpoint,
+            model_deployment_name=self._azure_ai_model_deployment_name
+        )
 
 
 ai_config = AIConfig()

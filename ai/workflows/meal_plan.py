@@ -6,4 +6,4 @@ from ..agents.macro_review import macro_review_agent
 
 if __name__ == "__main__":
 
-    serve(entities=[meal_plan_agent, macro_review_agent], auto_open=True)
+    serve(entities=[meal_plan_agent, macro_review_agent], auto_open=True, port=8090)

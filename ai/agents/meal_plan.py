@@ -1,7 +1,7 @@
 import logging
 
-from models.meal_plan import MealPlan
-from ai_config import config
+from ..models.meal_plan import MealPlan
+from ..ai_config import ai_config
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ system_instructions = f"""
 """
 
 
-meal_plan_agent = config.client.create_agent(
+meal_plan_agent = ai_config.client.create_agent(
     name="MealPlanAgent", 
     instructions=system_instructions,
     tools=[],
