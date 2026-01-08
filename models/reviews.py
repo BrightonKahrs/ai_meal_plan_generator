@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Literal
 
-class MacroBudgetReview(BaseModel):
+class MacroReview(BaseModel):
     """Represents a macro and budget review result"""
     model_config = ConfigDict(extra='forbid')
 
