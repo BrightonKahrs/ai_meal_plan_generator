@@ -1,4 +1,4 @@
-from ai.models.reviews import MacroReview
+from ai.models.review import Review
 from ai.ai_config import ai_config
 
 
@@ -95,7 +95,7 @@ system_instructions= f"""
 
 
     ## You must respond in the following JSON format:
-    {MacroReview.model_json_schema()}
+    {Review.model_json_schema()}
     """
 
 
@@ -103,5 +103,5 @@ macro_review_agent = ai_config.client.create_agent(
     name="MacroReviewAgent", 
     instructions=system_instructions,
     tools=[],
-    response_format=MacroReview
+    response_format=Review
 )
