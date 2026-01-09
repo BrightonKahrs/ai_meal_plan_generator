@@ -1,73 +1,125 @@
-from typing import Any
+import logging
 
 from agent_framework.devui import serve
-from agent_framework import AgentExecutorResponse, WorkflowBuilder, WorkflowContext, executor
+from agent_framework import AgentExecutorResponse, AgentRunResponse, Case, Default, ChatMessage, WorkflowBuilder, WorkflowContext, executor
 
 from ai.agents.meal_plan import meal_plan_agent
 from ai.agents.macro_review import macro_review_agent
 from ai.models.reviews import MacroReview
+from ai.models.meal_plan import MealPlan
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+MACRO_REQUIREMENTS = {
+    "calories": 2500,
+    "protein": 180,
+    "carbs": 200,
+    "fat": 100
+}
 
 # Conditions
-def review_failed(message: Any) -> bool:
+def review_passed(message: str) -> bool:
     """Check if content is approved (high quality)."""
-    if not isinstance(message, AgentExecutorResponse):
-        return True
     try:
-        review = MacroReview.model_validate_json(message.agent_run_response.text)
-        return review.review_status != "Passed"
+        review = MacroReview.model_validate_json(message)
+        return review.review_status == "Passed"
     except Exception:
-        return True
-    
+        logger.error("Failed to parse MacroReview from message", exc_info=True)
+        return False
+
 
 # Executors
-@executor(id="user_macro_requirements")
-async def user_macro_requirements(message: AgentExecutorResponse, ctx: WorkflowContext[str]) -> None:
-    """Send user requirements into chat for the reviewer to use"""
-    message = message.agent_run_response.text
+@executor(id="initialize_workflow")
+async def initialize_workflow_state(message: str, ctx: WorkflowContext[str]) -> None:
+    """Initialize any shared state needed for the workflow"""
+    await ctx.set_shared_state("current_meal_plan", None)
+    await ctx.set_shared_state("initial_user_message", message)
+    await ctx.set_shared_state("macro_requirements", MACRO_REQUIREMENTS)
+    await ctx.set_shared_state("macro_review_feedback", None)
+    await ctx.send_message("Ready to start workflow")
 
-    await ctx.send_message(f""" 
-        Provided Meal Plan:
-        {message}
-                
-        User Macro Requirements:
-        - Calories: 2500cal
-        - Protein: 180g
-        - Carbohydrates: 200g
-        - Fat: 100g          
-        """)
-    
-@executor(id="macro_review_feedback")
-async def macro_review_feedback(message: AgentExecutorResponse, ctx: WorkflowContext[str]) -> None:
-    """Send feedback from macro review to revise meal plan"""
-    message = message.agent_run_response.text
 
-    await ctx.send_message(f"""
-                           
-        Revise the previously generated meal plan to address the following feedback. We want to ensure all adjustments are accounted for in the new meal plan
-                           
-        ## Feedback to address
-            {message}
-        """)
+@executor(id="generate_meal_plan")
+async def generate_meal_plan(message: str, ctx: WorkflowContext[str]) -> None:
+    """Generate initial meal plan based on user input"""
 
-@executor(id="finalize_meal_plan")
-async def finalize_meal_plan(message: AgentExecutorResponse, ctx: WorkflowContext[str]) -> None:
+    macro_requirements = await ctx.get_shared_state("macro_requirements")
+    initial_user_message = await ctx.get_shared_state("initial_user_message")
+
+    macro_review_feedback = await ctx.get_shared_state("macro_review_feedback")
+
+    prompt = f"""
+    Generate a meal plan to satisfy the user ask and the macro requirements below. Make sure to use any corrections from previous reviews if applicable.
+    User Ask: {initial_user_message}
+
+    Feedback from previous reviews:
+    Macro review agent feedback: {macro_review_feedback}
+    """
+
+    result: MealPlan = await meal_plan_agent.run(prompt)
+
+    await ctx.set_shared_state("current_meal_plan", result)
+    await ctx.send_message("Meal plan generated, proceeding to review")
+
+
+@executor(id="macro_review")
+async def macro_review(message: str, ctx: WorkflowContext[str]) -> None:
+    """Generate review of current meal plan based on macro requirements"""
+
+    macro_requirements = await ctx.get_shared_state("macro_requirements")
+    current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
+
+    prompt = f"""
+    Provided Meal Plan:
+    {current_meal_plan}
+
+    User Macros:
+    {macro_requirements}
+    """
+
+    result: AgentRunResponse = await macro_review_agent.run(prompt)
+
+    await ctx.set_shared_state("macro_review_feedback", result.text)
+    await ctx.send_message(result.text)
+
+
+@executor(id="finalize_workflow")
+async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
-    await ctx.send_message("Meal plan complete")
+    current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
+
+    await ctx.yield_output(current_meal_plan)
+
+
+@executor(id="handle_error_endstate")
+async def handle_error_endstate(message: str, ctx: WorkflowContext[str]) -> None:
+    """Finishing steps once main workflow is complete"""
+    await ctx.yield_output("Workflow ended in error state")
 
 
 # Workflow
 workflow = (
     WorkflowBuilder(name="MealPlanReviewWorkflow", max_iterations=20)
-    .set_start_executor(meal_plan_agent)
-    .add_edge(meal_plan_agent, user_macro_requirements)
-    .add_edge(user_macro_requirements, macro_review_agent)
+    .set_start_executor(initialize_workflow_state)
+    .add_edge(initialize_workflow_state, generate_meal_plan)
+    .add_edge(generate_meal_plan, macro_review)
 
-    # Path is review failed
-    .add_edge(macro_review_agent, macro_review_feedback, condition=review_failed)
-    .add_edge(macro_review_feedback, meal_plan_agent)
+    .add_switch_case_edge_group(
+        macro_review,
+        [
+            Case(
+                condition=review_passed,
+                target=finalize_workflow
+            ),
+            Case(
+                condition= lambda result: not review_passed(result),
+                target=generate_meal_plan
+            ),
+            Default(target=handle_error_endstate)
+        ]
+    )
 
-    # Path is review passed
-    .add_edge(macro_review_agent, finalize_meal_plan, condition=lambda message: not review_failed(message))
     .build()
 )
 
