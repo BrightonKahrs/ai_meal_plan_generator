@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import List
 
@@ -52,32 +53,35 @@ async def initialize_workflow_state(message: str, ctx: WorkflowContext[str]) -> 
 async def generate_meal_plan(message: str, ctx: WorkflowContext[str]) -> None:
     """Generate initial meal plan based on user input"""
 
-    initial_user_message = await ctx.get_shared_state("initial_user_message")
-    macro_review_feedback = await ctx.get_shared_state("macro_review_feedback")
-    budget_review_feedback = await ctx.get_shared_state("budget_review_feedback")
+    initial_user_message: str = await ctx.get_shared_state("initial_user_message")
+    macro_review_feedback: Review | None = await ctx.get_shared_state("macro_review_feedback")
+    budget_review_feedback: Review | None = await ctx.get_shared_state("budget_review_feedback")
 
     prompt = f"""
     Generate a meal plan to satisfy the user ask and the macro requirements below. Make sure to use any corrections from previous reviews if applicable.
-    User Ask: {initial_user_message}
 
-    Feedback from previous reviews:
-    Macro review agent feedback: {macro_review_feedback}
-    Budget review agent feedback: {budget_review_feedback}
+    # User Ask: 
+    {initial_user_message}
+
+    # Feedback from previous reviews:
+        ## Macro review agent feedback:
+        {macro_review_feedback}
+        ## Budget review agent feedback: 
+        {budget_review_feedback}
     """
 
-    result: MealPlan = await meal_plan_agent.run(prompt)
+    result: AgentRunResponse = await meal_plan_agent.run(prompt)
+    meal_plan: MealPlan = MealPlan.model_validate_json(result.text)
 
-    await ctx.set_shared_state("current_meal_plan", result)
-    await ctx.add_event(WorkflowEvent("Meal Plan Generated"))
-    await ctx.send_message("Meal plan generated, proceeding to review")
-
+    await ctx.set_shared_state("current_meal_plan", meal_plan)
+    await ctx.send_message(meal_plan.model_dump_json(indent=2))
 
 @executor(id="macro_review")
 async def macro_review(message: str, ctx: WorkflowContext[str]) -> None:
     """Generate review of current meal plan based on macro requirements"""
 
-    macro_requirements = await ctx.get_shared_state("macro_requirements")
-    current_meal_plan = await ctx.get_shared_state("current_meal_plan")
+    macro_requirements: dict = await ctx.get_shared_state("macro_requirements")
+    current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
 
     prompt = f"""
     Provided Meal Plan:
@@ -88,17 +92,18 @@ async def macro_review(message: str, ctx: WorkflowContext[str]) -> None:
     """
 
     result: AgentRunResponse = await macro_review_agent.run(prompt)
+    macro_review: Review = Review.model_validate_json(result.text)
 
-    await ctx.set_shared_state("macro_review_feedback", result.text)
-    await ctx.send_message(result.text)
+    await ctx.set_shared_state("macro_review_feedback", macro_review)
+    await ctx.send_message(macro_review.model_dump_json(indent=2))
 
 
 @executor(id="budget_review")
 async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
     """Generate review of current meal plan based on budget requirements"""
 
-    budget_requirements = await ctx.get_shared_state("budget_requirements")
-    current_meal_plan = await ctx.get_shared_state("current_meal_plan")
+    budget_requirements: dict = await ctx.get_shared_state("budget_requirements")
+    current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
 
     prompt = f"""
     Provided Meal Plan:
@@ -109,26 +114,26 @@ async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
     """
 
     result: AgentRunResponse = await budget_review_agent.run(prompt)
-    await ctx.set_shared_state("budget_review_feedback", result.text)
-    await ctx.send_message(result.text)
+    budget_review: Review = Review.model_validate_json(result.text)
+    await ctx.set_shared_state("budget_review_feedback", budget_review)
+    await ctx.send_message(budget_review.model_dump_json(indent=2))
 
 
 @executor(id="review_aggregator")
 async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> None:
     """Aggregate review results from macro and budget reviewers"""
-    aggregated_reivew = Review.model_validate_json(messages[0])
+    reviews = [Review.model_validate_json(msg) for msg in messages]
 
-    for msg in messages[1:]:
-        msg = Review.model_validate_json(msg)
-        aggregated_reivew += msg
+    aggregated_review: Review = reviews[0]
+    for review in reviews[1:]:
+        aggregated_review += review
 
-    await ctx.send_message(aggregated_reivew.model_dump_json())
-
+    await ctx.send_message(aggregated_review.model_dump_json(indent=2))
 
 @executor(id="finalize_workflow")
 async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
-    current_meal_plan = await ctx.get_shared_state("current_meal_plan")
+    current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
     await ctx.yield_output(current_meal_plan)
     
 
