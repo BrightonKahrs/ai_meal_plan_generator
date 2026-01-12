@@ -23,10 +23,16 @@ class MacroNutrition(BaseModel):
     """Represents nutritional information on a PER serving basis"""
     model_config = ConfigDict(extra='forbid')
 
-    calories: int = Field(..., description="Calories in kcal per serving")
-    protein: float = Field(..., description="Protein in grams per serving")
-    fat: float = Field(..., description="Fat in grams per serving")
-    carbohydrates: float = Field(..., description="Carbohydrates in grams per serving")
+    calories: float = Field(description="Calories in kcal per serving", default=2000)
+    protein: float = Field(description="Protein in grams per serving", default=50)
+    fat: float = Field(description="Fat in grams per serving", default=70)
+    carbohydrates: float = Field(description="Carbohydrates in grams per serving", default=250)
+
+
+class Budget(BaseModel):
+    """Represents budget information"""
+    model_config = ConfigDict(extra='forbid')
+    total_budget: float = Field(description="Total budget in US dollars", default=150.0)
 
 
 class Recipe(BaseModel):

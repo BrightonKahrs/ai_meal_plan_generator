@@ -9,21 +9,16 @@ from ai.agents.meal_plan import meal_plan_agent
 from ai.agents.macro_review import macro_review_agent
 from ai.agents.budget_review import budget_review_agent
 from ai.models.review import Review
-from ai.models.meal_plan import MealPlan
+from ai.models.meal_plan import MealPlan, MacroNutrition, Budget
+from ai.models.requests import MealPlanWorkflowRequest
+from ai.state.user_settings import get_user_budget_settings, get_user_nutritional_settings
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-MACRO_REQUIREMENTS = {
-    "calories": 2500,
-    "protein": 180,
-    "carbs": 200,
-    "fat": 100
-}
+user_budget_settings = get_user_budget_settings()
+user_nutritional_settings = get_user_nutritional_settings()
 
-BUDGET_REQUIREMENTS = {
-    "total_budget": "$100"
-}
 
 # Conditions
 def review_passed(message: str) -> bool:
@@ -38,13 +33,13 @@ def review_passed(message: str) -> bool:
 
 # Executors
 @executor(id="initialize_workflow")
-async def initialize_workflow_state(message: str, ctx: WorkflowContext[str]) -> None:
+async def initialize_workflow_state(request: MealPlanWorkflowRequest, ctx: WorkflowContext[str]) -> None:
     """Initialize any shared state needed for the workflow"""
     await ctx.set_shared_state("current_meal_plan", None)
-    await ctx.set_shared_state("initial_user_message", message)
-    await ctx.set_shared_state("macro_requirements", MACRO_REQUIREMENTS)
+    await ctx.set_shared_state("initial_user_message", request.user_prompt)
+    await ctx.set_shared_state("macro_requirements", user_nutritional_settings)
     await ctx.set_shared_state("macro_review_feedback", None)
-    await ctx.set_shared_state("budget_requirements", BUDGET_REQUIREMENTS)
+    await ctx.set_shared_state("budget_requirements", user_budget_settings)
     await ctx.set_shared_state("budget_review_feedback", None)
     await ctx.send_message("Ready to start workflow")
 
@@ -80,7 +75,7 @@ async def generate_meal_plan(message: str, ctx: WorkflowContext[str]) -> None:
 async def macro_review(message: str, ctx: WorkflowContext[str]) -> None:
     """Generate review of current meal plan based on macro requirements"""
 
-    macro_requirements: dict = await ctx.get_shared_state("macro_requirements")
+    macro_requirements: MacroNutrition = await ctx.get_shared_state("macro_requirements")
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
 
     prompt = f"""
@@ -102,7 +97,7 @@ async def macro_review(message: str, ctx: WorkflowContext[str]) -> None:
 async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
     """Generate review of current meal plan based on budget requirements"""
 
-    budget_requirements: dict = await ctx.get_shared_state("budget_requirements")
+    budget_requirements: Budget = await ctx.get_shared_state("budget_requirements")
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
 
     prompt = f"""
@@ -130,17 +125,12 @@ async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> N
 
     await ctx.send_message(aggregated_review.model_dump_json(indent=2))
 
+
 @executor(id="finalize_workflow")
 async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
     await ctx.yield_output(current_meal_plan)
-    
-
-@executor(id="handle_error_endstate")
-async def handle_error_endstate(message: str, ctx: WorkflowContext[str]) -> None:
-    """Finishing steps once main workflow is complete"""
-    await ctx.yield_output("Workflow ended in error state")
 
 
 # Workflow
@@ -161,8 +151,7 @@ workflow = (
             Case(
                 condition= lambda result: not review_passed(result),
                 target=generate_meal_plan
-            ),
-            Default(target=handle_error_endstate)
+            )
         ]
     )
 
