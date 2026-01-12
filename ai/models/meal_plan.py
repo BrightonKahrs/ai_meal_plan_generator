@@ -74,3 +74,29 @@ class MealPlan(BaseModel):
     title: str
     notes: str
     plan: List[MealSlot]
+
+    def to_summary(self) -> str:
+        """Friendly string representation of the meal plan"""
+        output = f"{self.title}\n"
+
+        days = []
+        meal_times = []
+        for slot in self.plan:
+            for day in slot.meal_day:
+                if day not in days:
+                    days.append(day)
+            for meal_time in slot.meal_time:
+                if meal_time not in meal_times:
+                    meal_times.append(meal_time)
+
+        for day in days:
+            output += f"\n{day}\n"
+            for meal_time in meal_times:
+                # Find the first slot that matches this day and meal_time
+                matching_slot = next((slot for slot in self.plan if day in slot.meal_day and meal_time in slot.meal_time), None)
+                if matching_slot:
+                    output += f"  - {meal_time}: {matching_slot.recipe.title}\n"
+                else:
+                    output += f"  - {meal_time}: No meal planned\n"
+        
+        return output.strip()

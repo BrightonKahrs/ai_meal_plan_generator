@@ -125,7 +125,7 @@ async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> N
 async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
-    await ctx.yield_output(current_meal_plan.model_dump_json(indent=2))
+    await ctx.yield_output(current_meal_plan.to_summary())
     
 
 @executor(id="handle_error_endstate")
