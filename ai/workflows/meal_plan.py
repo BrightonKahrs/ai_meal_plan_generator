@@ -89,7 +89,7 @@ async def nutrition_review(message: str, ctx: WorkflowContext[str]) -> None:
     nutrition_review: Review = Review.model_validate_json(result.text)
 
     await ctx.set_shared_state("nutrition_review_feedback", nutrition_review)
-    await ctx.send_message(nutrition_review.model_dump_json(indent=2))
+    await ctx.send_message(nutrition_review.review_status)
 
 @executor(id="budget_review")
 async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
@@ -109,17 +109,15 @@ async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
     result: AgentRunResponse = await budget_review_agent.run(prompt)
     budget_review: Review = Review.model_validate_json(result.text)
     await ctx.set_shared_state("budget_review_feedback", budget_review)
-    await ctx.send_message(budget_review.model_dump_json(indent=2))
+    await ctx.send_message(budget_review.review_status)
 
 
 @executor(id="review_aggregator")
 async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> None:
     """Aggregate review results from nutrition and budget reviewers"""
-    reviews = [Review.model_validate_json(msg) for msg in messages]
-
-    aggregated_review: Review = reviews[0]
-    for review in reviews[1:]:
-        aggregated_review += review
+    nutrition_review: Review = await ctx.get_shared_state("nutrition_review_feedback")
+    budget_review: Review = await ctx.get_shared_state("budget_review_feedback")
+    aggregated_review = nutrition_review + budget_review
 
     await ctx.send_message(aggregated_review.model_dump_json(indent=2))
 
@@ -127,7 +125,7 @@ async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> N
 async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
-    await ctx.yield_output(current_meal_plan)
+    await ctx.yield_output(current_meal_plan.model_dump_json(indent=2))
     
 
 @executor(id="handle_error_endstate")
