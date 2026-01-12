@@ -125,12 +125,17 @@ async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> N
 
     await ctx.send_message(aggregated_review.model_dump_json(indent=2))
 
-
 @executor(id="finalize_workflow")
 async def finalize_workflow(message: str, ctx: WorkflowContext[str]) -> None:
     """Finishing steps once main workflow is complete"""
     current_meal_plan: MealPlan = await ctx.get_shared_state("current_meal_plan")
     await ctx.yield_output(current_meal_plan)
+    
+
+@executor(id="handle_error_endstate")
+async def handle_error_endstate(message: str, ctx: WorkflowContext[str]) -> None:
+    """Finishing steps once main workflow is complete"""
+    await ctx.yield_output("Workflow ended in error state")
 
 
 # Workflow
@@ -151,7 +156,8 @@ workflow = (
             Case(
                 condition= lambda result: not review_passed(result),
                 target=generate_meal_plan
-            )
+            ),
+            Default(target=handle_error_endstate)
         ]
     )
 

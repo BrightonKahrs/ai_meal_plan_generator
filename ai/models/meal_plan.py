@@ -49,8 +49,8 @@ class Recipe(BaseModel):
     complexity: Literal['Easy', 'Medium', 'Hard']
 
     # Details
-    ingredients: Optional[List[Ingredient]]
-    instructions: Optional[List[Instruction]]
+    ingredients: List[Ingredient]
+    instructions: List[Instruction]
 
 
 class MealSlot(BaseModel):

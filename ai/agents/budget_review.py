@@ -37,8 +37,17 @@ system_instructions= f"""
                         "comments": "",
                         "number_of_servings": 2,
                         "complexity": "Easy",
-                        "ingredients": null,
-                        "instructions": null
+                        "ingredients": [
+                            {{"name": "salmon fillet", "quantity": 225, "unit": "grams", "description": "fresh"}},
+                            {{"name": "mixed greens", "quantity": 120, "unit": "grams", "description": "washed"}},
+                            {{"name": "olive oil", "quantity": 30, "unit": "ml", "description": "extra virgin"}},
+                            {{"name": "lemon", "quantity": 1, "unit": "units", "description": "juiced"}}
+                        ],
+                        "instructions": [
+                            {{"step_number": 1, "description": "Season salmon with salt and pepper"}},
+                            {{"step_number": 2, "description": "Grill salmon for 4-5 minutes per side"}},
+                            {{"step_number": 3, "description": "Serve over mixed greens with olive oil and lemon"}}
+                        ]
                     }}
                 }},
                 {{
@@ -51,8 +60,19 @@ system_instructions= f"""
                         "comments": "",
                         "number_of_servings": 2,
                         "complexity": "Medium",
-                        "ingredients": null,
-                        "instructions": null
+                        "ingredients": [
+                            {{"name": "penne pasta", "quantity": 225, "unit": "grams", "description": "dried"}},
+                            {{"name": "zucchini", "quantity": 1, "unit": "units", "description": "medium, diced"}},
+                            {{"name": "bell pepper", "quantity": 1, "unit": "units", "description": "diced"}},
+                            {{"name": "cherry tomatoes", "quantity": 150, "unit": "grams", "description": "halved"}},
+                            {{"name": "garlic", "quantity": 3, "unit": "units", "description": "cloves, minced"}},
+                            {{"name": "parmesan cheese", "quantity": 30, "unit": "grams", "description": "grated"}}
+                        ],
+                        "instructions": [
+                            {{"step_number": 1, "description": "Cook pasta according to package directions"}},
+                            {{"step_number": 2, "description": "Sauté vegetables with garlic in olive oil"}},
+                            {{"step_number": 3, "description": "Toss pasta with vegetables and top with parmesan"}}
+                        ]
                     }}
                 }}
             ]

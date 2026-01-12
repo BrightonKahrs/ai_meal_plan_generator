@@ -18,7 +18,7 @@ system_instructions = f"""
     4. For "no dairy": NO milk, cheese, butter, cream, yogurt, or any dairy derivatives.
     5. Do NOT add more recipes than specifically requested by the user.
     6. ALWAYS adapt recipes to meet dietary requirements.
-    7. Do NOT include ingredients or instructions - leave them as null (these are draft recipes).
+    7. ALWAYS include ingredients and instructions for each recipe.
 
     ## RESPONSE FORMAT
     Respond ONLY with valid JSON matching this schema:
@@ -49,8 +49,19 @@ system_instructions = f"""
                         "carbohydrates": 50.0
                     }},
                     "complexity": "Easy",
-                    "ingredients": null,
-                    "instructions": null
+                    "ingredients": [
+                        {{"name": "zucchini", "quantity": 4, "unit": "units", "description": "medium, spiralized"}},
+                        {{"name": "basil", "quantity": 50, "unit": "grams", "description": "fresh leaves"}},
+                        {{"name": "pine nuts", "quantity": 30, "unit": "grams", "description": "raw"}},
+                        {{"name": "parmesan cheese", "quantity": 50, "unit": "grams", "description": "grated"}},
+                        {{"name": "garlic", "quantity": 2, "unit": "units", "description": "cloves, minced"}},
+                        {{"name": "olive oil", "quantity": 120, "unit": "ml", "description": "extra virgin"}}
+                    ],
+                    "instructions": [
+                        {{"step_number": 1, "description": "Spiralize zucchini into noodles and set aside"}},
+                        {{"step_number": 2, "description": "Blend basil, pine nuts, parmesan, garlic, and olive oil until smooth"}},
+                        {{"step_number": 3, "description": "Toss zucchini noodles with pesto and serve"}}
+                    ]
                 }}
             }},
             {{
@@ -69,8 +80,21 @@ system_instructions = f"""
                         "carbohydrates": 60.0
                     }},
                     "complexity": "Medium",
-                    "ingredients": null,
-                    "instructions": null
+                    "ingredients": [
+                        {{"name": "bell peppers", "quantity": 4, "unit": "units", "description": "large, tops removed"}},
+                        {{"name": "quinoa", "quantity": 180, "unit": "grams", "description": "uncooked"}},
+                        {{"name": "black beans", "quantity": 400, "unit": "grams", "description": "canned, drained"}},
+                        {{"name": "corn", "quantity": 150, "unit": "grams", "description": "kernels"}},
+                        {{"name": "cumin", "quantity": 5, "unit": "grams", "description": "ground"}},
+                        {{"name": "cheese", "quantity": 60, "unit": "grams", "description": "shredded"}}
+                    ],
+                    "instructions": [
+                        {{"step_number": 1, "description": "Cook quinoa according to package directions"}},
+                        {{"step_number": 2, "description": "Cut tops off peppers and remove seeds"}},
+                        {{"step_number": 3, "description": "Mix quinoa with beans, corn, and cumin"}},
+                        {{"step_number": 4, "description": "Stuff peppers and top with cheese"}},
+                        {{"step_number": 5, "description": "Bake at 375°F for 30 minutes"}}
+                    ]
                 }}
             }},
             {{
@@ -89,8 +113,22 @@ system_instructions = f"""
                         "carbohydrates": 70.0
                     }},
                     "complexity": "Medium",
-                    "ingredients": null,
-                    "instructions": null
+                    "ingredients": [
+                        {{"name": "arborio rice", "quantity": 280, "unit": "grams", "description": "uncooked"}},
+                        {{"name": "mushrooms", "quantity": 225, "unit": "grams", "description": "sliced"}},
+                        {{"name": "spinach", "quantity": 120, "unit": "grams", "description": "fresh"}},
+                        {{"name": "vegetable broth", "quantity": 960, "unit": "ml", "description": "warm"}},
+                        {{"name": "white wine", "quantity": 120, "unit": "ml", "description": "dry"}},
+                        {{"name": "parmesan cheese", "quantity": 50, "unit": "grams", "description": "grated"}},
+                        {{"name": "butter", "quantity": 30, "unit": "grams", "description": "unsalted"}}
+                    ],
+                    "instructions": [
+                        {{"step_number": 1, "description": "Sauté mushrooms in butter until golden"}},
+                        {{"step_number": 2, "description": "Add rice and toast for 2 minutes"}},
+                        {{"step_number": 3, "description": "Add wine and stir until absorbed"}},
+                        {{"step_number": 4, "description": "Add broth one ladle at a time, stirring constantly"}},
+                        {{"step_number": 5, "description": "Stir in spinach and parmesan before serving"}}
+                    ]
                 }}
             }},
             {{
@@ -109,8 +147,22 @@ system_instructions = f"""
                         "carbohydrates": 45.0
                     }},
                     "complexity": "Easy",
-                    "ingredients": null,
-                    "instructions": null
+                    "ingredients": [
+                        {{"name": "chicken breast", "quantity": 900, "unit": "grams", "description": "boneless, skinless"}},
+                        {{"name": "quinoa", "quantity": 360, "unit": "grams", "description": "uncooked"}},
+                        {{"name": "broccoli", "quantity": 300, "unit": "grams", "description": "florets"}},
+                        {{"name": "sweet potato", "quantity": 2, "unit": "units", "description": "medium, cubed"}},
+                        {{"name": "olive oil", "quantity": 45, "unit": "ml", "description": "for roasting"}},
+                        {{"name": "garlic powder", "quantity": 5, "unit": "grams", "description": "for seasoning"}},
+                        {{"name": "paprika", "quantity": 5, "unit": "grams", "description": "for seasoning"}}
+                    ],
+                    "instructions": [
+                        {{"step_number": 1, "description": "Season chicken with garlic powder and paprika, grill until cooked through"}},
+                        {{"step_number": 2, "description": "Cook quinoa according to package directions"}},
+                        {{"step_number": 3, "description": "Cube sweet potatoes and toss with olive oil, roast at 400°F for 25 minutes"}},
+                        {{"step_number": 4, "description": "Steam broccoli until tender-crisp"}},
+                        {{"step_number": 5, "description": "Slice chicken and portion into containers with quinoa and vegetables"}}
+                    ]
                 }}
             }}
         ]
