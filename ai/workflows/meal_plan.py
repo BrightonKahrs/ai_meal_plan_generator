@@ -51,11 +51,20 @@ async def generate_meal_plan(message: str, ctx: WorkflowContext[str]) -> None:
     initial_user_message: str = await ctx.get_shared_state("initial_user_message")
     nutrition_review_feedback: Review | None = await ctx.get_shared_state("nutrition_review_feedback")
     budget_review_feedback: Review | None = await ctx.get_shared_state("budget_review_feedback")
+    user_nutritional_settings: Nutrition = await ctx.get_shared_state("nutrition_requirements")
+    user_budget_settings: Budget = await ctx.get_shared_state("budget_requirements")
+
 
     prompt = f"""
     Generate a meal plan to satisfy the user ask and the nutritional requirements below. Make sure to use any corrections from previous reviews if applicable.
     # User Ask: 
     {initial_user_message}
+
+    # Nutritional Requirements:
+    {user_nutritional_settings}
+
+    # Budget:
+    {user_budget_settings}
 
     # Feedback from previous reviews:
         ## Nutrition review agent feedback:
@@ -113,7 +122,7 @@ async def budget_review(message: str, ctx: WorkflowContext[str]) -> None:
 
 
 @executor(id="review_aggregator")
-async def review_aggregator(messages: List[str], ctx: WorkflowContext[str]) -> None:
+async def review_aggregator(message: List[str], ctx: WorkflowContext[str]) -> None:
     """Aggregate review results from nutrition and budget reviewers"""
     nutrition_review: Review = await ctx.get_shared_state("nutrition_review_feedback")
     budget_review: Review = await ctx.get_shared_state("budget_review_feedback")
