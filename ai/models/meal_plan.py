@@ -19,7 +19,7 @@ class Instruction(BaseModel):
     description: str
 
 
-class MacroNutrition(BaseModel):
+class Nutrition(BaseModel):
     """Represents nutritional information on a PER serving basis"""
     model_config = ConfigDict(extra='forbid')
 
@@ -45,7 +45,7 @@ class Recipe(BaseModel):
     description: str
     comments: str
     number_of_servings: int
-    nutritional_info: MacroNutrition
+    nutritional_info: Nutrition
     complexity: Literal['Easy', 'Medium', 'Hard']
 
     # Details

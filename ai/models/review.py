@@ -13,11 +13,11 @@ class Adjustment(BaseModel):
 
 
 class Review(BaseModel):
-    """Represents a macro and budget review result"""
+    """Represents a nutrition and budget review result"""
     model_config = ConfigDict(extra='forbid')
 
     review_status: Literal['Passed', 'Failed'] = Field(..., description="Demonstrates whether or not the review passed or failed")
-    adjustments: List[Adjustment] = Field(..., description="List of feedback adjustment suggestions for macro review")
+    adjustments: List[Adjustment] = Field(..., description="List of feedback adjustment suggestions for nutrition review")
 
     def __add__(self, other: Review) -> Review:
         """Combine two reviews using the + operator.
