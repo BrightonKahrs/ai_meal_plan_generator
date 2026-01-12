@@ -76,27 +76,45 @@ class MealPlan(BaseModel):
     plan: List[MealSlot]
 
     def to_summary(self) -> str:
-        """Friendly string representation of the meal plan"""
-        output = f"{self.title}\n"
+            """Friendly string representation of the meal plan"""
+            output = f"{self.title}\n"
 
-        days = []
-        meal_times = []
-        for slot in self.plan:
-            for day in slot.meal_day:
-                if day not in days:
-                    days.append(day)
-            for meal_time in slot.meal_time:
-                if meal_time not in meal_times:
-                    meal_times.append(meal_time)
+            days = []
+            meal_times = []
+            for slot in self.plan:
+                for day in slot.meal_day:
+                    if day not in days:
+                        days.append(day)
+                for meal_time in slot.meal_time:
+                    if meal_time not in meal_times:
+                        meal_times.append(meal_time)
 
-        for day in days:
-            output += f"\n{day}\n"
-            for meal_time in meal_times:
-                # Find the first slot that matches this day and meal_time
-                matching_slot = next((slot for slot in self.plan if day in slot.meal_day and meal_time in slot.meal_time), None)
-                if matching_slot:
-                    output += f"  - {meal_time}: {matching_slot.recipe.title}\n"
-                else:
-                    output += f"  - {meal_time}: No meal planned\n"
-        
-        return output.strip()
+            for day in days:
+                # Calculate daily totals
+                daily_cal = 0.0
+                daily_protein = 0.0
+                daily_fat = 0.0
+                daily_carbs = 0.0
+                
+                day_meals = []
+                for meal_time in meal_times:
+                    matching_slot = next((slot for slot in self.plan if day in slot.meal_day and meal_time in slot.meal_time), None)
+                    if matching_slot:
+                        nutrition = matching_slot.recipe.nutritional_info
+                        daily_cal += nutrition.calories
+                        daily_protein += nutrition.protein
+                        daily_fat += nutrition.fat
+                        daily_carbs += nutrition.carbohydrates
+                        day_meals.append((meal_time, matching_slot.recipe.title, nutrition))
+                    else:
+                        day_meals.append((meal_time, None, None))
+                
+                output += f"\n{day} ({daily_cal:.0f}cal, {daily_protein:.0f}p, {daily_fat:.0f}f, {daily_carbs:.0f}c)\n"
+                
+                for meal_time, title, nutrition in day_meals:
+                    if title and nutrition:
+                        output += f"  - {meal_time}: {title} ({nutrition.calories:.0f}cal, {nutrition.protein:.0f}p, {nutrition.fat:.0f}f, {nutrition.carbohydrates:.0f}c)\n"
+                    else:
+                        output += f"  - {meal_time}: No meal planned\n"
+            
+            return output.strip()
